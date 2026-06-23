@@ -1,0 +1,490 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Task Management API",
+        "description": "REST API для управления списком задач",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Local server"
+        }
+    ],
+    "paths": {
+        "/api/tasks/{id}": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Получить задачу по ID",
+                "description": "Возвращает информацию о конкретной задаче",
+                "operationId": "getTaskById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID задачи",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "title": {
+                                            "type": "string",
+                                            "example": "Задача1"
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "example": "Задача1 описание",
+                                            "nullable": true
+                                        },
+                                        "due_date": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-01-20T15:00:00"
+                                        },
+                                        "created_date": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-01-20T15:00:00"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "pending",
+                                            "enum": [
+                                                "pending",
+                                                "completed"
+                                            ]
+                                        },
+                                        "priority": {
+                                            "type": "string",
+                                            "example": "high",
+                                            "enum": [
+                                                "low",
+                                                "medium",
+                                                "high"
+                                            ]
+                                        },
+                                        "category": {
+                                            "type": "string",
+                                            "example": "Работа"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Задача не найдена"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Обновить задачу",
+                "description": "Обновляет информацию о задаче (все поля опциональны)",
+                "operationId": "updateTask",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID задачи",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Задача2",
+                                        "maxLength": 255
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Задача2 описание обновленное",
+                                        "nullable": true
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-01-25T18:00:00"
+                                    },
+                                    "created_date": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-01-20T15:00:00"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "completed",
+                                        "enum": [
+                                            "pending",
+                                            "completed"
+                                        ]
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "example": "low",
+                                        "enum": [
+                                            "low",
+                                            "medium",
+                                            "high"
+                                        ]
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Личное",
+                                        "maxLength": 100
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Задача успешно обновлена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Task updated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Задача не найдена"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Удалить задачу",
+                "description": "Удаляет задачу по её ID",
+                "operationId": "deleteTask",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID задачи",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Задача успешно удалена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Task deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Задача не найдена"
+                    }
+                }
+            }
+        },
+        "/api/tasks": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Получить список задач",
+                "description": "Возвращает список задач с пагинацией, поиском и сортировкой",
+                "operationId": "listTasks",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Поиск по названию",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Поле для сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "due_date",
+                                "created_at",
+                                "created_date",
+                                "title",
+                                "priority",
+                                "status"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Количество задач на странице",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "due_date": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "created_date": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "pending",
+                                                            "completed"
+                                                        ]
+                                                    },
+                                                    "priority": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "low",
+                                                            "medium",
+                                                            "high"
+                                                        ]
+                                                    },
+                                                    "category": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "first_page_url": {
+                                            "type": "string"
+                                        },
+                                        "from": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page_url": {
+                                            "type": "string"
+                                        },
+                                        "next_page_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "path": {
+                                            "type": "string"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "prev_page_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "to": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Создать новую задачу",
+                "description": "Создает новую задачу с переданными данными",
+                "operationId": "createTask",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "due_date",
+                                    "category"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Задача1",
+                                        "maxLength": 255
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Задача1 описание",
+                                        "nullable": true
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-01-20T15:00:00"
+                                    },
+                                    "created_date": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-01-20T15:00:00",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "pending",
+                                        "enum": [
+                                            "pending",
+                                            "completed"
+                                        ]
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "example": "high",
+                                        "enum": [
+                                            "low",
+                                            "medium",
+                                            "high"
+                                        ]
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Работа",
+                                        "maxLength": 100
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Задача успешно создана",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Task created successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Tasks",
+            "description": "Управление задачами"
+        }
+    ]
+}
