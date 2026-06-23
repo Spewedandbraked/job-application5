@@ -35,7 +35,8 @@ class TaskApiTest extends TestCase
                 'total',
                 'per_page',
                 'last_page',
-            ]);
+            ])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_search_tasks_by_title(): void
@@ -43,7 +44,7 @@ class TaskApiTest extends TestCase
         Task::factory()->create(['title' => 'Test Search Task']);
         Task::factory()->create(['title' => 'Another Task']);
 
-        $response = $this->getJson('/api/tasks?search=Test');
+        $response = $this->getJson('/api/tasks?filter[search]=Test');
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
@@ -78,9 +79,14 @@ class TaskApiTest extends TestCase
         $response = $this->postJson('/api/tasks', $payload);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['id', 'message']);
+            ->assertJsonStructure(['id', 'message'])
+            ->assertJson(['message' => 'Task created successfully']);
+
+        $taskId = $response->json('id');
+        $this->assertNotNull($taskId);
 
         $this->assertDatabaseHas('tasks', [
+            'id' => $taskId,
             'title' => 'New Task',
             'description' => 'Task description',
             'priority' => 'high',
@@ -105,14 +111,12 @@ class TaskApiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'data' => [ // <-- добавить обертку data
-                    'id' => $task->id,
-                    'title' => $task->title,
-                    'description' => $task->description,
-                    'status' => $task->status->value,
-                    'priority' => $task->priority->value,
-                    'category' => $task->category,
-                ],
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'status' => $task->status->value,
+                'priority' => $task->priority->value,
+                'category' => $task->category,
             ]);
     }
 
@@ -196,7 +200,6 @@ class TaskApiTest extends TestCase
             ->assertJson([
                 'per_page' => 10,
                 'current_page' => 1,
-                'data' => [],
             ])
             ->assertJsonCount(10, 'data');
     }
@@ -247,5 +250,146 @@ class TaskApiTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['due_date']);
+    }
+
+    public function test_can_filter_tasks_by_status(): void
+    {
+        Task::factory()->count(2)->create(['status' => 'pending']);
+        Task::factory()->create(['status' => 'completed']);
+
+        $response = $this->getJson('/api/tasks?filter[status]=pending');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.status', 'pending')
+            ->assertJsonPath('data.1.status', 'pending');
+    }
+
+    public function test_can_filter_tasks_by_priority(): void
+    {
+        Task::factory()->create(['priority' => 'high']);
+        Task::factory()->count(2)->create(['priority' => 'low']);
+
+        $response = $this->getJson('/api/tasks?filter[priority]=high');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.priority', 'high');
+    }
+
+    public function test_can_sort_tasks_descending(): void
+    {
+        $task1 = Task::factory()->create(['due_date' => now()->addDays(1)]);
+        $task2 = Task::factory()->create(['due_date' => now()->addDays(3)]);
+
+        $response = $this->getJson('/api/tasks?sort=-due_date');
+
+        $response->assertStatus(200);
+        $this->assertEquals($task2->id, $response->json('data.0.id'));
+        $this->assertEquals($task1->id, $response->json('data.1.id'));
+    }
+
+    public function test_search_returns_empty_when_no_match(): void
+    {
+        Task::factory()->create(['title' => 'Sample Task']);
+
+        $response = $this->getJson('/api/tasks?filter[search]=Nonexistent');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(0, 'data');
+    }
+
+    public function test_task_created_with_default_values(): void
+    {
+        $payload = [
+            'title' => 'Task Without Optional Fields',
+            'due_date' => now()->addDays(1)->toDateTimeString(),
+            'category' => 'Work',
+        ];
+
+        $response = $this->postJson('/api/tasks', $payload);
+
+        $response->assertStatus(201);
+
+        $taskId = $response->json('id');
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $taskId,
+            'title' => 'Task Without Optional Fields',
+            'status' => 'pending',
+            'priority' => 'medium',
+        ]);
+    }
+
+    public function test_can_get_empty_tasks_list(): void
+    {
+        $response = $this->getJson('/api/tasks');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(0, 'data')
+            ->assertJson([
+                'total' => 0,
+                'current_page' => 1,
+            ]);
+    }
+
+    public function test_cannot_create_task_with_past_due_date(): void
+    {
+        $response = $this->postJson('/api/tasks', [
+            'title' => 'Test Task',
+            'due_date' => now()->subDay()->toDateTimeString(),
+            'category' => 'Work',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['due_date']);
+
+        $this->assertDatabaseCount('tasks', 0);
+    }
+
+    public function test_can_create_task_with_minimal_fields(): void
+    {
+        $payload = [
+            'title' => 'Minimal Task',
+            'due_date' => now()->addDay()->toDateTimeString(),
+            'category' => 'Personal',
+        ];
+
+        $response = $this->postJson('/api/tasks', $payload);
+
+        $response->assertStatus(201)
+            ->assertJsonStructure(['id', 'message']);
+    }
+
+    public function test_can_update_task_with_valid_status(): void
+    {
+        $task = Task::factory()->create(['status' => 'pending']);
+
+        $response = $this->putJson("/api/tasks/{$task->id}", [
+            'status' => 'completed',
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'status' => 'completed',
+        ]);
+    }
+
+    public function test_can_update_task_with_valid_priority(): void
+    {
+        $task = Task::factory()->create(['priority' => 'low']);
+
+        $response = $this->putJson("/api/tasks/{$task->id}", [
+            'priority' => 'high',
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'priority' => 'high',
+        ]);
     }
 }

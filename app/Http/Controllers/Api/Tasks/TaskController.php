@@ -9,18 +9,31 @@ use App\Http\Resources\TaskResource;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class TaskController extends Controller
 {
     public function index(Request $request): TaskCollection
     {
         $perPage = $request->input('per_page', 15);
-        $search = $request->input('search');
-        $sort = $request->input('sort');
 
-        $tasks = Task::query()
-            ->filterByTitle($search)
-            ->sortBy($sort)
+        $tasks = QueryBuilder::for(Task::class)
+            ->allowedFilters(
+                AllowedFilter::partial('search', 'title'),
+                AllowedFilter::exact('status'),
+                AllowedFilter::exact('priority'),
+            )
+            ->allowedSorts(
+                'due_date',
+                'created_at',
+                'created_date',
+                'title',
+                'priority',
+                'status',
+            )
+            ->defaultSort('due_date')
             ->paginate($perPage);
 
         return new TaskCollection($tasks);
@@ -38,23 +51,23 @@ class TaskController extends Controller
 
         return response()->json([
             'id' => $task->id,
-            'message' => 'Task created successfully'
+            'message' => 'Task created successfully',
         ], 201);
     }
 
-    public function show(Task $task): TaskResource
+    public function show(Task $task): JsonResource
     {
+        JsonResource::withoutWrapping();
         return new TaskResource($task);
     }
 
     public function update(TaskRequest $request, Task $task): JsonResponse
     {
         $validated = $request->validated();
-
         $task->update($validated);
 
         return response()->json([
-            'message' => 'Task updated successfully'
+            'message' => 'Task updated successfully',
         ]);
     }
 
@@ -63,7 +76,7 @@ class TaskController extends Controller
         $task->delete();
 
         return response()->json([
-            'message' => 'Task deleted successfully'
+            'message' => 'Task deleted successfully',
         ]);
     }
 }

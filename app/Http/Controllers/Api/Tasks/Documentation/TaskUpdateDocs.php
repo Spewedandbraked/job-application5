@@ -8,7 +8,7 @@ use OpenApi\Attributes as OA;
     path: "/api/tasks/{id}",
     operationId: "updateTask",
     summary: "Обновить задачу",
-    description: "Обновляет информацию о задаче (все поля опциональны)",
+    description: "Обновляет информацию о задаче. Все поля опциональны - можно передать только те, которые нужно изменить",
     tags: ["Tasks"],
     parameters: [
         new OA\Parameter(
@@ -23,8 +23,8 @@ use OpenApi\Attributes as OA;
         required: false,
         content: new OA\JsonContent(
             properties: [
-                new OA\Property(property: "title", type: "string", maxLength: 255, example: "Задача2"),
-                new OA\Property(property: "description", type: "string", nullable: true, example: "Задача2 описание обновленное"),
+                new OA\Property(property: "title", type: "string", maxLength: 255, example: "Обновленная задача"),
+                new OA\Property(property: "description", type: "string", nullable: true, example: "Обновленное описание"),
                 new OA\Property(property: "due_date", type: "string", format: "date-time", example: "2025-01-25T18:00:00"),
                 new OA\Property(property: "created_date", type: "string", format: "date-time", example: "2025-01-20T15:00:00"),
                 new OA\Property(property: "status", type: "string", enum: ["pending", "completed"], example: "completed"),
@@ -49,7 +49,13 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Response(
             response: 422,
-            description: "Ошибка валидации"
+            description: "Ошибка валидации",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "message", type: "string", example: "The given data was invalid."),
+                    new OA\Property(property: "errors", type: "object"),
+                ]
+            )
         ),
     ]
 )]

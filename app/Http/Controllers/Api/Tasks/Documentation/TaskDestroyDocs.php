@@ -8,7 +8,7 @@ use OpenApi\Attributes as OA;
     path: "/api/tasks/{id}",
     operationId: "deleteTask",
     summary: "Удалить задачу",
-    description: "Удаляет задачу по её ID",
+    description: "Удаляет задачу по её ID. Возвращает 404 если задача не найдена",
     tags: ["Tasks"],
     parameters: [
         new OA\Parameter(
@@ -31,7 +31,12 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Response(
             response: 404,
-            description: "Задача не найдена"
+            description: "Задача не найдена",
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "message", type: "string", example: "Resource not found"),
+                ]
+            )
         ),
     ]
 )]
